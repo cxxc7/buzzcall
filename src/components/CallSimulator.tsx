@@ -1,164 +1,174 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Phone, Video, Send, Server } from "lucide-react";
+import { Phone, Video, Send, Server, Zap } from "lucide-react";
 import { toast } from "sonner";
 
 export const CallSimulator: React.FC = () => {
-  const [backendUrl, setBackendUrl] = useState('http://localhost:3001');
-  const [recipientId, setRecipientId] = useState('user123');
+  const [backendUrl, setBackendUrl] = useState('https://api.buzzcall.enterprise');
+  const [recipientId, setRecipientId] = useState('user_enterprise_001');
   const [notificationType, setNotificationType] = useState('call');
   const [customMessage, setCustomMessage] = useState('');
 
-  // Simulate backend API for triggering notifications
+  // Simulate enterprise backend API for triggering notifications
   const simulateBackendTrigger = async () => {
     try {
       const payload = {
         recipientId,
         type: notificationType,
-        title: notificationType === 'call' ? '📞 Incoming Call' : 
-               notificationType === 'video' ? '📹 Video Call' : '💬 New Message',
+        title: notificationType === 'call' ? '📞 BuzzCall Incoming' : 
+               notificationType === 'video' ? '📹 BuzzCall Video Conference' : '💬 BuzzCall Message',
         body: customMessage || (
-          notificationType === 'call' ? 'Someone is calling you...' :
-          notificationType === 'video' ? 'Someone wants to video chat' :
-          'You have a new message'
+          notificationType === 'call' ? 'Enterprise call incoming from BuzzCall system...' :
+          notificationType === 'video' ? 'Video conference request via BuzzCall platform' :
+          'Priority message delivered through BuzzCall engine'
         ),
         data: {
           type: notificationType,
           userId: recipientId,
-          deepLink: `/${notificationType}/${recipientId}`,
-          timestamp: new Date().toISOString()
+          deepLink: `/buzzcall/${notificationType}/${recipientId}`,
+          timestamp: new Date().toISOString(),
+          priority: 'high',
+          source: 'BuzzCall Enterprise API'
         }
       };
 
-      console.log('Simulating backend API call:', payload);
+      console.log('🚀 BuzzCall Enterprise API Trigger:', payload);
       
-      // Simulate network request
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Simulate network request with enterprise-grade latency
+      toast.info('Processing through BuzzCall API...');
+      await new Promise(resolve => setTimeout(resolve, 1200));
       
-      // Simulate FCM trigger (this would normally be done by your backend)
+      // Simulate FCM trigger with enterprise payload
       const options: NotificationOptions = {
         body: payload.body,
         icon: `/icons/${notificationType}.png`,
-        badge: '/icons/badge.png',
+        badge: '/icons/buzzcall-badge.png',
         data: payload.data,
         requireInteraction: notificationType === 'call' || notificationType === 'video',
       };
 
-      // Add actions only if supported (this is not standard in all browsers)
+      // Add enterprise call actions
       if (notificationType === 'call' && 'ServiceWorkerRegistration' in window) {
         (options as any).actions = [
-          { action: 'answer', title: 'Answer' },
-          { action: 'decline', title: 'Decline' }
+          { action: 'answer', title: 'Accept Call' },
+          { action: 'decline', title: 'Decline Call' }
         ];
       }
 
       const notification = new Notification(payload.title, options);
 
       notification.onclick = () => {
-        toast.success(`Deep link activated: ${payload.data.deepLink}`);
+        toast.success(`🎯 BuzzCall Deep Link: ${payload.data.deepLink}`);
         notification.close();
       };
 
-      toast.success('Backend notification triggered successfully!');
+      toast.success('✅ Enterprise notification delivered successfully!');
       
     } catch (error) {
-      console.error('Backend simulation error:', error);
-      toast.error('Failed to trigger backend notification');
+      console.error('❌ BuzzCall API Error:', error);
+      toast.error('Failed to process through BuzzCall API');
     }
   };
 
   return (
-    <Card>
+    <Card className="buzz-card-gradient border-border/50">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Server className="h-5 w-5" />
-          Backend Notification Simulator
+        <CardTitle className="flex items-center gap-3">
+          <div className="p-2 bg-primary/20 rounded-lg">
+            <Server className="h-6 w-6 text-primary" />
+          </div>
+          Enterprise Backend Simulator
         </CardTitle>
         <CardDescription>
-          Simulate triggering notifications from a backend API (like your Node.js server)
+          Simulate real-world BuzzCall API triggers from enterprise backend systems
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="backend-url">Backend URL</Label>
+      <CardContent className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-3">
+            <Label htmlFor="backend-url" className="text-sm font-semibold">API Endpoint</Label>
             <Input
               id="backend-url"
               value={backendUrl}
               onChange={(e) => setBackendUrl(e.target.value)}
-              placeholder="http://localhost:3001"
+              placeholder="https://api.buzzcall.enterprise"
+              className="bg-muted/20 border-border/50"
             />
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="recipient">Recipient ID</Label>
+          <div className="space-y-3">
+            <Label htmlFor="recipient" className="text-sm font-semibold">Target User ID</Label>
             <Input
               id="recipient"
               value={recipientId}
               onChange={(e) => setRecipientId(e.target.value)}
-              placeholder="user123"
+              placeholder="user_enterprise_001"
+              className="bg-muted/20 border-border/50"
             />
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="notification-type">Notification Type</Label>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-3">
+            <Label htmlFor="notification-type" className="text-sm font-semibold">Notification Type</Label>
             <Select value={notificationType} onValueChange={setNotificationType}>
-              <SelectTrigger>
+              <SelectTrigger className="bg-muted/20 border-border/50">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-card border-border">
                 <SelectItem value="call">
-                  <div className="flex items-center gap-2">
-                    <Phone className="h-4 w-4" />
-                    Voice Call
+                  <div className="flex items-center gap-3">
+                    <Phone className="h-4 w-4 text-green-400" />
+                    Enterprise Voice Call
                   </div>
                 </SelectItem>
                 <SelectItem value="video">
-                  <div className="flex items-center gap-2">
-                    <Video className="h-4 w-4" />
-                    Video Call
+                  <div className="flex items-center gap-3">
+                    <Video className="h-4 w-4 text-blue-400" />
+                    Video Conference
                   </div>
                 </SelectItem>
                 <SelectItem value="message">
-                  <div className="flex items-center gap-2">
-                    <Send className="h-4 w-4" />
-                    Message
+                  <div className="flex items-center gap-3">
+                    <Send className="h-4 w-4 text-purple-400" />
+                    Priority Message
                   </div>
                 </SelectItem>
               </SelectContent>
             </Select>
           </div>
           
-          <div className="space-y-2">
-            <Label htmlFor="custom-message">Custom Message (Optional)</Label>
+          <div className="space-y-3">
+            <Label htmlFor="custom-message" className="text-sm font-semibold">Custom Payload</Label>
             <Input
               id="custom-message"
               value={customMessage}
               onChange={(e) => setCustomMessage(e.target.value)}
-              placeholder="Custom notification message..."
+              placeholder="Custom enterprise message..."
+              className="bg-muted/20 border-border/50"
             />
           </div>
         </div>
 
         <Button 
           onClick={simulateBackendTrigger}
-          className="w-full bg-orange-600 hover:bg-orange-700"
+          className="w-full h-14 text-lg font-semibold buzz-accent-gradient hover:opacity-90 transition-all"
         >
-          <Server className="h-4 w-4 mr-2" />
-          Trigger from "Backend" API
+          <Zap className="h-5 w-5 mr-3" />
+          Trigger BuzzCall Enterprise API
         </Button>
 
-        <div className="text-xs text-gray-500 space-y-1">
-          <p><strong>Note:</strong> This simulates how your backend would trigger FCM notifications.</p>
-          <p><strong>Real implementation:</strong> Your Node.js server would call FCM API with the device token.</p>
-          <p><strong>Native Android:</strong> The native module would handle these notifications even when app is killed.</p>
+        <div className="p-4 rounded-lg bg-primary/10 border border-primary/20">
+          <div className="text-xs text-muted-foreground space-y-2">
+            <p><strong className="text-primary">Production Ready:</strong> This simulates enterprise backend FCM integration</p>
+            <p><strong className="text-primary">Native Processing:</strong> Java modules handle notifications in killed app state</p>
+            <p><strong className="text-primary">Smart Routing:</strong> Deep links navigate to specific app screens automatically</p>
+          </div>
         </div>
       </CardContent>
     </Card>

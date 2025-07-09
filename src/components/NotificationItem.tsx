@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Phone, Video, MessageSquare, Check, ExternalLink } from "lucide-react";
+import { Phone, Video, MessageSquare, Check, ExternalLink, Zap } from "lucide-react";
 import { toast } from "sonner";
 
 interface Notification {
@@ -27,38 +27,51 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
   const getIcon = () => {
     switch (notification.type) {
       case 'call':
-        return <Phone className="h-5 w-5 text-green-600" />;
+        return <Phone className="h-5 w-5 text-green-400" />;
       case 'video':
-        return <Video className="h-5 w-5 text-blue-600" />;
+        return <Video className="h-5 w-5 text-blue-400" />;
       case 'message':
-        return <MessageSquare className="h-5 w-5 text-purple-600" />;
+        return <MessageSquare className="h-5 w-5 text-purple-400" />;
       default:
-        return <MessageSquare className="h-5 w-5 text-gray-600" />;
+        return <MessageSquare className="h-5 w-5 text-muted-foreground" />;
     }
   };
 
   const getTypeColor = () => {
     switch (notification.type) {
       case 'call':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-500/20 text-green-400 border-green-500/20';
       case 'video':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-500/20 text-blue-400 border-blue-500/20';
       case 'message':
-        return 'bg-purple-100 text-purple-800';
+        return 'bg-purple-500/20 text-purple-400 border-purple-500/20';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-muted/20 text-muted-foreground border-border/20';
+    }
+  };
+
+  const getTypeName = () => {
+    switch (notification.type) {
+      case 'call':
+        return 'Voice Call';
+      case 'video':
+        return 'Video Conference';
+      case 'message':
+        return 'Priority Message';
+      default:
+        return 'Notification';
     }
   };
 
   const handleDeepLink = () => {
     const deepLinks = {
-      call: '/call/simulation',
-      video: '/video/simulation',
-      message: '/chat/simulation'
+      call: '/buzzcall/voice-call/simulation',
+      video: '/buzzcall/video-conference/simulation',
+      message: '/buzzcall/messages/simulation'
     };
     
-    toast.success(`Deep link activated: ${deepLinks[notification.type]}`);
-    console.log('Deep link navigation:', deepLinks[notification.type]);
+    toast.success(`🎯 BuzzCall Navigation: ${deepLinks[notification.type]}`);
+    console.log('🔗 Deep link activated:', deepLinks[notification.type]);
     
     // Mark as read when interacted with
     if (!notification.read) {
@@ -67,56 +80,63 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
   };
 
   return (
-    <Card className={`transition-all hover:shadow-md ${
-      !notification.read ? 'ring-2 ring-blue-200 bg-blue-50' : 'bg-white'
+    <Card className={`transition-all duration-200 buzz-card-gradient border-border/50 hover:border-primary/30 ${
+      !notification.read ? 'ring-1 ring-primary/20 bg-primary/5' : ''
     }`}>
-      <CardContent className="p-4">
+      <CardContent className="p-5">
         <div className="flex items-start justify-between">
-          <div className="flex items-start gap-3 flex-1">
-            <div className="mt-1">
+          <div className="flex items-start gap-4 flex-1">
+            <div className="mt-1 p-2 rounded-lg bg-muted/20">
               {getIcon()}
             </div>
             
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <h4 className="font-semibold text-gray-900 truncate">
+              <div className="flex items-center gap-3 mb-2">
+                <h4 className="font-semibold text-foreground truncate">
                   {notification.title}
                 </h4>
-                <Badge variant="outline" className={getTypeColor()}>
-                  {notification.type}
+                <Badge className={getTypeColor()}>
+                  {getTypeName()}
                 </Badge>
                 {!notification.read && (
-                  <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                  <div className="flex items-center gap-1">
+                    <div className="w-2 h-2 bg-primary rounded-full buzz-pulse"></div>
+                    <span className="text-xs text-primary font-medium">NEW</span>
+                  </div>
                 )}
               </div>
               
-              <p className="text-gray-600 text-sm mb-2">
+              <p className="text-muted-foreground text-sm mb-3 leading-relaxed">
                 {notification.body}
               </p>
               
-              <p className="text-xs text-gray-400">
-                {notification.timestamp.toLocaleTimeString()}
-              </p>
+              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1">
+                  <Zap className="h-3 w-3" />
+                  {notification.timestamp.toLocaleTimeString()}
+                </span>
+                <span>•</span>
+                <span>BuzzCall Engine</span>
+              </div>
             </div>
           </div>
           
           <div className="flex gap-2 ml-4">
             <Button
               size="sm"
-              variant="outline"
               onClick={handleDeepLink}
-              className="flex items-center gap-1"
+              className="flex items-center gap-2 buzz-accent-gradient hover:opacity-90"
             >
               <ExternalLink className="h-3 w-3" />
-              Open
+              Navigate
             </Button>
             
             {!notification.read && (
               <Button
                 size="sm"
-                variant="ghost"
+                variant="outline"
                 onClick={() => onMarkAsRead(notification.id)}
-                className="flex items-center gap-1"
+                className="flex items-center gap-2 border-border/50 hover:bg-muted/20"
               >
                 <Check className="h-3 w-3" />
                 Read
