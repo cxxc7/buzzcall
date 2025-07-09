@@ -91,17 +91,23 @@ class NotificationService {
       
       // Show browser notification if supported
       if ('Notification' in window && Notification.permission === 'granted') {
-        const browserNotification = new Notification(notification.title, {
+        const options: NotificationOptions = {
           body: notification.body,
           icon: notification.icon,
           badge: '/icons/badge.png',
           data: notification.data,
           requireInteraction: type === 'call' || type === 'video', // Keep call notifications visible
-          actions: type === 'call' ? [
+        };
+
+        // Add actions only if supported (this is not standard in all browsers)
+        if (type === 'call' && 'ServiceWorkerRegistration' in window) {
+          (options as any).actions = [
             { action: 'answer', title: 'Answer' },
             { action: 'decline', title: 'Decline' }
-          ] : []
-        });
+          ];
+        }
+
+        const browserNotification = new Notification(notification.title, options);
 
         browserNotification.onclick = () => {
           this.tapCallbacks.forEach(callback => callback(notification));

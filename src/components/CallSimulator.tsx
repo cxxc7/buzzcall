@@ -41,17 +41,23 @@ export const CallSimulator: React.FC = () => {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Simulate FCM trigger (this would normally be done by your backend)
-      const notification = new Notification(payload.title, {
+      const options: NotificationOptions = {
         body: payload.body,
         icon: `/icons/${notificationType}.png`,
         badge: '/icons/badge.png',
         data: payload.data,
         requireInteraction: notificationType === 'call' || notificationType === 'video',
-        actions: notificationType === 'call' ? [
+      };
+
+      // Add actions only if supported (this is not standard in all browsers)
+      if (notificationType === 'call' && 'ServiceWorkerRegistration' in window) {
+        (options as any).actions = [
           { action: 'answer', title: 'Answer' },
           { action: 'decline', title: 'Decline' }
-        ] : []
-      });
+        ];
+      }
+
+      const notification = new Notification(payload.title, options);
 
       notification.onclick = () => {
         toast.success(`Deep link activated: ${payload.data.deepLink}`);
