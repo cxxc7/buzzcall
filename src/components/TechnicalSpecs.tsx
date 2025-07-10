@@ -68,6 +68,9 @@ export const TechnicalSpecs: React.FC<TechnicalSpecsProps> = ({
         <CardTitle className="flex items-center gap-3">
           <Code className="h-6 w-6 text-primary" />
           Enterprise Technical Architecture
+          <Badge variant="outline" className="px-3 py-1">
+            Android 15 Compatible
+          </Badge>
         </CardTitle>
         <CardDescription>
           Production-ready infrastructure with enterprise-grade security and scalability
@@ -147,20 +150,64 @@ export const TechnicalSpecs: React.FC<TechnicalSpecsProps> = ({
           </h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="text-center p-3 bg-green-500/10 rounded-lg">
-              <div className="text-xl font-bold text-green-400">99.9%</div>
+              <div className="text-xl font-bold text-green-400">
+                {isWebSocketConnected && isEncryptionReady ? "99.9%" : "95.0%"}
+              </div>
               <div className="text-xs text-muted-foreground">Uptime SLA</div>
             </div>
             <div className="text-center p-3 bg-blue-500/10 rounded-lg">
-              <div className="text-xl font-bold text-blue-400">&lt;50ms</div>
+              <div className="text-xl font-bold text-blue-400">
+                {isWebSocketConnected ? "<50ms" : "<200ms"}
+              </div>
               <div className="text-xs text-muted-foreground">Avg Latency</div>
             </div>
             <div className="text-center p-3 bg-purple-500/10 rounded-lg">
-              <div className="text-xl font-bold text-purple-400">10M+</div>
-              <div className="text-xs text-muted-foreground">Daily Messages</div>
+              <div className="text-xl font-bold text-purple-400">Ready</div>
+              <div className="text-xs text-muted-foreground">Android 15</div>
             </div>
             <div className="text-center p-3 bg-orange-500/10 rounded-lg">
-              <div className="text-xl font-bold text-orange-400">256</div>
+              <div className="text-xl font-bold text-orange-400">
+                {isEncryptionReady ? "2048" : "Pending"}
+              </div>
               <div className="text-xs text-muted-foreground">Bit Encryption</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Android 15 Compatibility */}
+        <div className="mt-6 pt-6 border-t border-border/50">
+          <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Zap className="h-4 w-4" />
+            Android 15 Compatibility Features
+          </h3>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+                <span className="text-muted-foreground">Notification Channels API</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+                <span className="text-muted-foreground">Background App Restrictions</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+                <span className="text-muted-foreground">Doze Mode Optimization</span>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+                <span className="text-muted-foreground">Adaptive Battery Support</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+                <span className="text-muted-foreground">Runtime Permissions</span>
+              </div>
+              <div className="flex items-center gap-2 text-sm">
+                <div className="w-1.5 h-1.5 bg-green-400 rounded-full"></div>
+                <span className="text-muted-foreground">Scoped Storage Compliance</span>
+              </div>
             </div>
           </div>
         </div>

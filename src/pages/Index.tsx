@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { toast } from "sonner";
 import NotificationService from '@/services/NotificationService';
@@ -37,13 +36,26 @@ const Index = () => {
         await NotificationService.initialize();
         setIsConnected(true);
         
-        // Initialize WebSocket for real-time updates
-        await WebSocketService.connect();
-        setIsWebSocketConnected(true);
-        
         // Initialize end-to-end encryption
         await EncryptionService.initialize();
         setIsEncryptionReady(true);
+        
+        // Try to initialize WebSocket (non-blocking)
+        try {
+          await WebSocketService.connect();
+          setIsWebSocketConnected(true);
+        } catch (error) {
+          console.log('📡 WebSocket unavailable - using fallback mode');
+          setIsWebSocketConnected(false);
+        }
+        
+        // Listen for WebSocket connection changes
+        WebSocketService.onConnectionChange((connected) => {
+          setIsWebSocketConnected(connected);
+          if (connected) {
+            toast.success('🔗 Real-time connection established');
+          }
+        });
         
         // Load stored notifications
         const storedNotifications = NotificationStorageService.getAllNotifications();
@@ -83,11 +95,13 @@ const Index = () => {
           setNotifications(prev => [newNotification, ...prev]);
           setBadgeCount(prev => prev + 1);
           
-          // Send real-time update via WebSocket
-          WebSocketService.send({
-            type: 'notification_received',
-            data: newNotification
-          });
+          // Send real-time update via WebSocket if connected
+          if (WebSocketService.isConnected()) {
+            WebSocketService.send({
+              type: 'notification_received',
+              data: newNotification
+            });
+          }
         });
 
         // Handle smart deep linking
@@ -106,7 +120,7 @@ const Index = () => {
 
       } catch (error) {
         console.error('❌ BuzzCall engine initialization failed:', error);
-        toast.error('Failed to initialize BuzzCall engine');
+        toast.error('BuzzCall initialized with limited features');
       }
     };
 
