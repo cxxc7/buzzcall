@@ -1,10 +1,23 @@
+import messaging, { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
+import PushNotification, { Importance } from 'react-native-push-notification';
+import { Platform } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { navigate } from '../navigation/RootNavigation';
 
-// Firebase Cloud Messaging Service for WhatsApp-style notifications
+export interface NotificationData {
+  id: string;
+  title: string;
+  body: string;
+  type: 'call' | 'video' | 'message';
+  timestamp: Date;
+  read: boolean;
+  data?: any;
+}
+
 class NotificationService {
   private static instance: NotificationService;
   private fcmToken: string | null = null;
-  private notificationCallbacks: ((notification: any) => void)[] = [];
-  private tapCallbacks: ((notification: any) => void)[] = [];
+  private isInitialized = false;
 
   static getInstance(): NotificationService {
     if (!NotificationService.instance) {
@@ -14,117 +27,232 @@ class NotificationService {
   }
 
   async initialize(): Promise<void> {
-    console.log('Initializing notification service...');
-    
-    // Request notification permission
-    if ('Notification' in window) {
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-        console.log('Notification permission granted');
+    if (this.isInitialized) return;
+
+    try {
+      // Configure push notifications
+      PushNotification.configure({
+        onRegister: (token: any) => {
+          console.log('Push notification token:', token);
+        },
+        onNotification: (notification: any) => {
+          console.log('Local notification received:', notification);
+          if (notification.userInteraction) {
+            this.handleNotificationTap(notification);
+          }
+        },
+        permissions: {
+          alert: true,
+          badge: true,
+          sound: true,
+        },
+        popInitialNotification: true,
+        requestPermissions: Platform.OS === 'ios',
+      });
+
+      // Create notification channels for Android
+      if (Platform.OS === 'android') {
+        PushNotification.createChannel(
+          {
+            channelId: 'calls',
+            channelName: 'Voice & Video Calls',
+            channelDescription: 'Incoming voice and video calls',
+            importance: Importance.HIGH,
+            vibrate: true,
+          },
+          (created: boolean) => console.log(`Channel 'calls' created: ${created}`)
+        );
+
+        PushNotification.createChannel(
+          {
+            channelId: 'messages',
+            channelName: 'Messages',
+            channelDescription: 'New messages and chats',
+            importance: Importance.DEFAULT,
+            vibrate: true,
+          },
+          (created: boolean) => console.log(`Channel 'messages' created: ${created}`)
+        );
       }
+
+      // Get FCM token
+      this.fcmToken = await messaging().getToken();
+      console.log('FCM Token:', this.fcmToken);
+
+      this.isInitialized = true;
+    } catch (error) {
+      console.error('Failed to initialize NotificationService:', error);
+      throw error;
     }
+  }
 
-    // Simulate FCM token generation
-    this.fcmToken = 'mock_fcm_token_' + Date.now();
-    console.log('FCM Token:', this.fcmToken);
-
-    // Listen for messages when app is in foreground
-    this.setupForegroundListener();
+  handleForegroundMessage(remoteMessage: FirebaseMessagingTypes.RemoteMessage): void {
+    console.log('Handling foreground message:', remoteMessage);
     
-    // Setup service worker for background notifications
-    this.setupBackgroundListener();
-  }
+    const { notification, data } = remoteMessage;
+    if (!notification) return;
 
-  private setupForegroundListener(): void {
-    // This would typically integrate with Firebase
-    console.log('Setting up foreground notification listener');
-  }
+    const notificationData: NotificationData = {
+      id: Date.now().toString(),
+      title: notification.title || 'BuzzCall',
+      body: notification.body || '',
+      type: (data?.type as any) || 'message',
+      timestamp: new Date(),
+      read: false,
+      data: data,
+    };
 
-  private setupBackgroundListener(): void {
-    // Register service worker for background notifications
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/firebase-messaging-sw.js')
-        .then((registration) => {
-          console.log('Service Worker registered:', registration);
-        })
-        .catch((error) => {
-          console.log('Service Worker registration failed:', error);
-        });
+    // Store notification
+    this.storeNotification(notificationData);
+
+    // Show local notification for foreground messages
+    if (data?.type === 'call' || data?.type === 'video') {
+      this.showCallNotification(notificationData);
+    } else {
+      this.showMessageNotification(notificationData);
     }
   }
 
-  onNotificationReceived(callback: (notification: any) => void): void {
-    this.notificationCallbacks.push(callback);
+  handleNotificationTap(notification: any): void {
+    console.log('Notification tapped:', notification);
+    
+    const data = notification.data || {};
+    const type = data.type || 'message';
+
+    switch (type) {
+      case 'call':
+      case 'video':
+        navigate('Call', { type, id: data.id || Date.now().toString() });
+        break;
+      case 'message':
+        navigate('History');
+        break;
+      default:
+        navigate('Home');
+    }
   }
 
-  onNotificationTap(callback: (notification: any) => void): void {
-    this.tapCallbacks.push(callback);
+  private showCallNotification(notificationData: NotificationData): void {
+    PushNotification.localNotification({
+      channelId: 'calls',
+      title: notificationData.title,
+      message: notificationData.body,
+      largeIcon: 'ic_launcher',
+      smallIcon: 'ic_notification',
+      priority: 'high',
+      importance: 'high',
+      autoCancel: false,
+      ongoing: true,
+      actions: ['Answer', 'Decline'],
+      userInfo: notificationData.data,
+    });
   }
 
-  async sendCustomNotification(type: 'call' | 'video' | 'message', customMessage?: string): Promise<void> {
+  private showMessageNotification(notificationData: NotificationData): void {
+    PushNotification.localNotification({
+      channelId: 'messages',
+      title: notificationData.title,
+      message: notificationData.body,
+      largeIcon: 'ic_launcher',
+      smallIcon: 'ic_notification',
+      userInfo: notificationData.data,
+    });
+  }
+
+  async storeNotification(notification: NotificationData): Promise<void> {
+    try {
+      const stored = await AsyncStorage.getItem('notifications');
+      const notifications: NotificationData[] = stored ? JSON.parse(stored) : [];
+      notifications.unshift(notification);
+      
+      // Keep only last 100 notifications
+      if (notifications.length > 100) {
+        notifications.splice(100);
+      }
+      
+      await AsyncStorage.setItem('notifications', JSON.stringify(notifications));
+    } catch (error) {
+      console.error('Failed to store notification:', error);
+    }
+  }
+
+  async getStoredNotifications(): Promise<NotificationData[]> {
+    try {
+      const stored = await AsyncStorage.getItem('notifications');
+      const notifications = stored ? JSON.parse(stored) : [];
+      return notifications.map((n: any) => ({
+        ...n,
+        timestamp: new Date(n.timestamp),
+      }));
+    } catch (error) {
+      console.error('Failed to get stored notifications:', error);
+      return [];
+    }
+  }
+
+  async markAsRead(id: string): Promise<void> {
+    try {
+      const stored = await AsyncStorage.getItem('notifications');
+      const notifications: NotificationData[] = stored ? JSON.parse(stored) : [];
+      const updated = notifications.map(n => 
+        n.id === id ? { ...n, read: true } : n
+      );
+      await AsyncStorage.setItem('notifications', JSON.stringify(updated));
+    } catch (error) {
+      console.error('Failed to mark notification as read:', error);
+    }
+  }
+
+  async clearAllNotifications(): Promise<void> {
+    try {
+      await AsyncStorage.removeItem('notifications');
+      PushNotification.cancelAllLocalNotifications();
+    } catch (error) {
+      console.error('Failed to clear notifications:', error);
+    }
+  }
+
+  // Simulate backend notification for testing
+  async sendTestNotification(type: 'call' | 'video' | 'message', customMessage?: string): Promise<void> {
     const titles = {
       call: '📞 Incoming Call',
-      video: '📹 Video Call',
+      video: '📹 Video Call', 
       message: '💬 New Message'
     };
 
     const defaultMessages = {
-      call: 'Someone is calling you',
-      video: 'Video conference invitation',
+      call: 'John Doe is calling you',
+      video: 'Team meeting starting now',
       message: 'You have a new message'
     };
 
-    const notification = {
-      title: titles[type],
-      body: customMessage || defaultMessages[type],
-      icon: `/icons/${type}.png`,
-      data: { 
-        type, 
-        userId: `user_${Date.now()}`, 
-        deepLink: `/buzzcall/${type}/demo` 
-      }
+    const mockRemoteMessage: FirebaseMessagingTypes.RemoteMessage = {
+      messageId: Date.now().toString(),
+      notification: {
+        title: titles[type],
+        body: customMessage || defaultMessages[type],
+      },
+      data: {
+        type,
+        id: Date.now().toString(),
+        sender: 'demo_sender',
+      },
+      fcmOptions: {},
     };
-    
+
+    // Simulate delay like real FCM
     setTimeout(() => {
-      this.notificationCallbacks.forEach(callback => callback(notification));
-      
-      if ('Notification' in window && Notification.permission === 'granted') {
-        const options: NotificationOptions = {
-          body: notification.body,
-          icon: notification.icon,
-          badge: '/icons/badge.png',
-          data: notification.data,
-          requireInteraction: type === 'call' || type === 'video',
-        };
-
-        const browserNotification = new Notification(notification.title, options);
-
-        browserNotification.onclick = () => {
-          this.tapCallbacks.forEach(callback => callback(notification));
-          browserNotification.close();
-        };
-      }
+      this.handleForegroundMessage(mockRemoteMessage);
     }, 1000);
-  }
-
-  async sendTestNotification(type: 'call' | 'video' | 'message'): Promise<void> {
-    return this.sendCustomNotification(type);
-  }
-
-  // Simulate backend API call
-  async triggerFromBackend(type: string, customMessage?: string): Promise<void> {
-    console.log('Triggering notification from backend:', { type, customMessage });
-    
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        this.sendCustomNotification(type as any, customMessage);
-        resolve();
-      }, 500);
-    });
   }
 
   getFCMToken(): string | null {
     return this.fcmToken;
+  }
+
+  async getBadgeCount(): Promise<number> {
+    const notifications = await this.getStoredNotifications();
+    return notifications.filter(n => !n.read).length;
   }
 }
 
