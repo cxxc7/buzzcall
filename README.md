@@ -1,157 +1,97 @@
-# 🚀 BuzzCall - Enterprise Push Notification Engine
+This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
-> **Mission**: A professional-grade mobile notification system with native Android integration, real-time delivery, and enterprise-level reliability — all built as a fun project to push mobile development skills to the next level.
+# Getting Started
 
-## 🎯 Project Overview
+> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
 
-**BuzzCall** is a comprehensive push notification platform designed to showcase advanced mobile development techniques including native module integration, real-time messaging, and production-ready architecture.
+## Step 1: Start Metro
 
-## ✨ Key Highlights
+First, you will need to run **Metro**, the JavaScript build tool for React Native.
 
-- Full Feature Implementation — Packed with core and bonus features  
-- Enterprise-Grade Architecture — Built with professional-quality standards  
-- Native Android Integration — Custom Java modules for sophisticated notification handling  
-- Real-Time Delivery — Sub-second push notifications powered by FCM  
-- WhatsApp-Level UX — Smooth, polished user experience with smart call and message flows  
+To start the Metro dev server, run the following command from the root of your React Native project:
 
-## 🏗️ Technical Architecture
+```sh
+# Using npm
+npm start
 
-### Core Technologies
-
-- Frontend: React + TypeScript + Capacitor  
-- Native Layer: Java modules for Android notification handling  
-- Push Service: Firebase Cloud Messaging (FCM)  
-- State Management: React hooks  
-- UI Framework: Shadcn/UI  
-- Build System: Vite  
-
-### System Architecture Diagram
-
-```
-┌────────────────────┐      ┌────────────────────────┐      ┌────────────────────┐
-│    BuzzCall UI     │◄────►│   Notification Layer   │◄────►│ Native Android SDK │
-│   (React + TS)     │      │ (Service + Dispatcher) │      │   (Java Modules)    │
-└────────────────────┘      └────────────────────────┘      └────────────────────┘
-         ▲                            ▲                              ▲
-         │                            │                              │
-         ▼                            ▼                              ▼
-┌────────────────────┐      ┌────────────────────────┐      ┌────────────────────┐
-│   Deep Linking &    │      │   Firebase Cloud       │      │  Background Task   │
-│   Navigation Router │      │   Messaging (FCM)      │      │    Processor       │
-└────────────────────┘      └────────────────────────┘      └────────────────────┘
+# OR using Yarn
+yarn start
 ```
 
-## 📱 Feature Demonstrations
+## Step 2: Build and run your app
 
-### Voice Calls
+With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
 
-- High-priority notifications with ringtone  
-- Full-screen incoming call interface  
-- Answer/Decline action buttons  
-- Background processing when app is killed  
+### Android
 
-### Video Conferences
+```sh
+# Using npm
+npm run android
 
-- Video call notifications with metadata  
-- Camera permission handling  
-- Meeting room deep linking  
-- Call info preview  
+# OR using Yarn
+yarn android
+```
 
-### Priority Messages
+### iOS
 
-- Real-time message delivery  
-- Chat deep linking  
-- Quick reply actions  
-- Message preview  
+For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
 
-### Advanced Features
+The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
 
-- Smart Deep Linking  
-- Badge Management  
-- Notification History  
-- Simulated Backend API  
+```sh
+bundle install
+```
 
-## 🔧 Development Workflow
+Then, and every time you update your native dependencies, run:
 
-### Local Development
+```sh
+bundle exec pod install
+```
 
-git clone <repository-url>  
-cd buzzcall  
-npm install  
+For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
 
-npx cap init  
-npm run dev  
+```sh
+# Using npm
+npm run ios
 
-# Build and run on Android  
-npm run build  
-npx cap sync  
-npx cap run android  
+# OR using Yarn
+yarn ios
+```
 
-### Production Deployment
+If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
 
-npm run build  
-npx cap add android  
-npx cap add ios  
-npx cap sync  
+This is one way to run your app — you can also build it directly from Android Studio or Xcode.
 
-npx cap run android --prod  
+## Step 3: Modify your app
 
-## 🧪 Testing Scenarios
+Now that you have successfully run the app, let's make changes!
 
-### Foreground Testing
+Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
 
-- In-app notification display  
-- Deep linking behavior  
+When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
 
-### Background Testing
+- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
+- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
 
-- System tray notifications  
-- Background processing verified  
+## Congratulations! :tada:
 
-### Killed App Testing
+You've successfully run and modified your React Native App. :partying_face:
 
-- Force-closed app receives notifications  
-- App wakes up and deep links work  
+### Now what?
 
-### Backend Testing
+- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
+- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
 
-- Trigger simulated API calls  
-- End-to-end flow via FCM payloads  
+# Troubleshooting
 
-## 📊 Performance Metrics
+If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
 
-- Notification Delivery: < 1 second average  
-- Killed App Reliability: 100%  
-- Deep Link Navigation: Instantaneous  
-- Memory Usage: Optimized for low-end devices  
-- Battery Usage: Minimal  
+# Learn More
 
---- 
+To learn more about React Native, take a look at the following resources:
 
-## 🛠 Deployment Checklist
-
-- [x] Android/iOS compatibility  
-- [x] Native Java module integration  
-- [x] Production FCM setup  
-- [x] Security best practices  
-- [x] Optimized performance  
-- [x] Fallbacks and error handling  
-- [x] Clean UX and polish  
-- [x] Full documentation  
-
-## 🤖 Future Enhancements
-
-- WebSocket support for instant updates  ✅
-- End-to-end encryption for messages  ✅
-- Real-time analytics dashboards  ✅
-- ML-based smart notification prioritization  
-
-## ✅ Summary
-
-This fun project demonstrates:
-
-- Modern Tech Stack — React, TypeScript, Capacitor, Java  
-- Real-World Architecture — Push notification systems at scale  
-- Strong Engineering Practices — Testing, CI/CD readiness, code clarity  
-- Creativity & Innovation — Bonus features, deep linking, backend sim  
-- Interview Readiness — Explains design decisions and trade-offs clearly  
+- [React Native Website](https://reactnative.dev) - learn more about React Native.
+- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
+- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
+- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
+- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
