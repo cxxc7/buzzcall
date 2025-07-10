@@ -10,7 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import NotificationService, { NotificationData } from '../services/NotificationService';
+import NotificationService from '../services/NotificationService';
 
 const HomeScreen = () => {
   const [isConnected, setIsConnected] = useState(false);
@@ -72,7 +72,7 @@ const HomeScreen = () => {
         <Text style={styles.title}>🚀 BuzzCall</Text>
         <Text style={styles.subtitle}>Enterprise Push Notification Engine</Text>
         <View style={styles.statusContainer}>
-          <View style={[styles.statusDot, { backgroundColor: isConnected ? '#10b981' : '#ef4444' }]} />
+          <View style={[styles.statusDot, isConnected ? styles.statusConnected : styles.statusDisconnected]} />
           <Text style={styles.statusText}>
             {isConnected ? 'Connected' : 'Disconnected'}
           </Text>
@@ -226,6 +226,12 @@ const styles = StyleSheet.create({
     height: 8,
     borderRadius: 4,
     marginRight: 8,
+  },
+  statusConnected: {
+    backgroundColor: '#10b981',
+  },
+  statusDisconnected: {
+    backgroundColor: '#ef4444',
   },
   statusText: {
     fontSize: 14,

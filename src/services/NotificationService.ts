@@ -1,6 +1,6 @@
 import messaging, { FirebaseMessagingTypes } from '@react-native-firebase/messaging';
 import PushNotification, { Importance } from 'react-native-push-notification';
-import { Alert, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { navigate } from '../navigation/RootNavigation';
 
@@ -32,10 +32,10 @@ class NotificationService {
     try {
       // Configure push notifications
       PushNotification.configure({
-        onRegister: (token) => {
+        onRegister: (token: any) => {
           console.log('Push notification token:', token);
         },
-        onNotification: (notification) => {
+        onNotification: (notification: any) => {
           console.log('Local notification received:', notification);
           if (notification.userInteraction) {
             this.handleNotificationTap(notification);
@@ -60,7 +60,7 @@ class NotificationService {
             importance: Importance.HIGH,
             vibrate: true,
           },
-          (created) => console.log(`Channel 'calls' created: ${created}`)
+          (created: boolean) => console.log(`Channel 'calls' created: ${created}`)
         );
 
         PushNotification.createChannel(
@@ -71,7 +71,7 @@ class NotificationService {
             importance: Importance.DEFAULT,
             vibrate: true,
           },
-          (created) => console.log(`Channel 'messages' created: ${created}`)
+          (created: boolean) => console.log(`Channel 'messages' created: ${created}`)
         );
       }
 
@@ -237,6 +237,7 @@ class NotificationService {
         id: Date.now().toString(),
         sender: 'demo_sender',
       },
+      fcmOptions: {},
     };
 
     // Simulate delay like real FCM

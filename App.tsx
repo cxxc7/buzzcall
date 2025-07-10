@@ -11,7 +11,6 @@ import {
   SafeAreaView, 
   StatusBar, 
   Alert,
-  Platform
 } from 'react-native';
 import messaging from '@react-native-firebase/messaging';
 import { navigationRef } from './src/navigation/RootNavigation';
@@ -28,8 +27,8 @@ function TabNavigator() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
+        tabBarIcon: ({ color, size }) => {
+          let iconName = 'home';
 
           if (route.name === 'Home') {
             iconName = 'home';
@@ -107,8 +106,10 @@ function App(): React.JSX.Element {
     initializeApp();
   }, []);
 
+  const containerStyle = { flex: 1 };
+
   return (
-    <SafeAreaView style={{ flex: 1 }}>
+    <SafeAreaView style={containerStyle}>
       <StatusBar barStyle="dark-content" backgroundColor="#ffffff" />
       <NavigationContainer 
         ref={navigationRef}
@@ -138,7 +139,7 @@ function App(): React.JSX.Element {
             component={CallScreen}
             options={{ 
               headerShown: false,
-              presentation: 'fullScreenModal'
+              presentation: 'modal'
             }}
           />
         </Stack.Navigator>
