@@ -3,10 +3,11 @@ class WebSocketService {
   private static instance: WebSocketService;
   private ws: WebSocket | null = null;
   private reconnectAttempts = 0;
-  private maxReconnectAttempts = 3;
-  private reconnectDelay = 1000;
+  private maxReconnectAttempts = 5;
+  private reconnectDelay = 2000;
   private messageHandlers: Map<string, (data: any) => void> = new Map();
   private connectionCallbacks: ((connected: boolean) => void)[] = [];
+  private isManuallyDisconnected = false;
 
   static getInstance(): WebSocketService {
     if (!WebSocketService.instance) {
@@ -18,11 +19,20 @@ class WebSocketService {
   async connect(endpoint: string = 'wss://ws.buzzcall.enterprise/v1'): Promise<void> {
     return new Promise((resolve, reject) => {
       try {
-        console.log('🔄 Attempting to connect to BuzzCall WebSocket...');
+        console.log('🔄 Attempting to connect to WebSocket...');
+        this.isManuallyDisconnected = false;
         this.ws = new WebSocket(endpoint);
         
+        const connectionTimeout = setTimeout(() => {
+          if (this.ws && this.ws.readyState === WebSocket.CONNECTING) {
+            this.ws.close();
+            reject(new Error('Connection timeout'));
+          }
+        }, 10000); // 10 second timeout
+        
         this.ws.onopen = () => {
-          console.log('🔗 BuzzCall WebSocket connected');
+          clearTimeout(connectionTimeout);
+          console.log('🔗 WebSocket connected successfully');
           this.reconnectAttempts = 0;
           this.notifyConnectionChange(true);
           resolve();
@@ -30,7 +40,6 @@ class WebSocketService {
 
         this.ws.onmessage = (event) => {
           try {
-            // Only try to parse if it looks like JSON
             if (event.data.trim().startsWith('{') || event.data.trim().startsWith('[')) {
               const data = JSON.parse(event.data);
               console.log('📨 Real-time message received:', data);
@@ -46,16 +55,19 @@ class WebSocketService {
           }
         };
 
-        this.ws.onclose = () => {
-          console.log('🔌 WebSocket disconnected');
+        this.ws.onclose = (event) => {
+          clearTimeout(connectionTimeout);
+          console.log('🔌 WebSocket disconnected', event.code, event.reason);
           this.notifyConnectionChange(false);
-          if (this.reconnectAttempts < this.maxReconnectAttempts) {
+          
+          if (!this.isManuallyDisconnected && this.reconnectAttempts < this.maxReconnectAttempts) {
             this.handleReconnect(endpoint);
           }
         };
 
         this.ws.onerror = (error) => {
-          console.log('⚠️ WebSocket connection failed - using fallback mode');
+          clearTimeout(connectionTimeout);
+          console.log('⚠️ WebSocket connection failed - demo endpoints are simulated');
           this.notifyConnectionChange(false);
           reject(error);
         };
@@ -68,13 +80,14 @@ class WebSocketService {
   }
 
   private handleReconnect(endpoint: string): void {
+    const delay = this.reconnectDelay * Math.pow(1.5, this.reconnectAttempts);
     setTimeout(() => {
       this.reconnectAttempts++;
       console.log(`🔄 Reconnect attempt ${this.reconnectAttempts}/${this.maxReconnectAttempts}`);
       this.connect(endpoint).catch(() => {
         console.log('🔄 Reconnection failed');
       });
-    }, this.reconnectDelay * Math.pow(2, this.reconnectAttempts));
+    }, delay);
   }
 
   private notifyConnectionChange(connected: boolean): void {
@@ -102,10 +115,19 @@ class WebSocketService {
   }
 
   disconnect(): void {
+    this.isManuallyDisconnected = true;
     if (this.ws) {
       this.ws.close();
       this.ws = null;
     }
+  }
+
+  getConnectionStatus(): { connected: boolean; attempts: number; maxAttempts: number } {
+    return {
+      connected: this.isConnected(),
+      attempts: this.reconnectAttempts,
+      maxAttempts: this.maxReconnectAttempts
+    };
   }
 }
 

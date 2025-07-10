@@ -1,3 +1,4 @@
+
 // Firebase Cloud Messaging Service for WhatsApp-style notifications
 class NotificationService {
   private static instance: NotificationService;
@@ -10,35 +11,6 @@ class NotificationService {
       NotificationService.instance = new NotificationService();
     }
     return NotificationService.instance;
-  }
-
-  private getRandomMessages() {
-    return {
-      call: [
-        "Incoming call from Alex Johnson",
-        "Sarah wants to talk - urgent", 
-        "Conference call starting now",
-        "Your manager is calling",
-        "Client meeting reminder call"
-      ],
-      video: [
-        "Video meeting with the team",
-        "Sarah wants to video chat",
-        "Join the product demo now",
-        "Weekly standup is starting",
-        "Client presentation ready"
-      ],
-      message: [
-        "Can we reschedule our meeting?",
-        "Great work on the project!",
-        "The files you requested are ready",
-        "Don't forget about tomorrow's deadline",
-        "New task assigned to you",
-        "Meeting moved to 3 PM",
-        "Your report has been approved",
-        "Urgent: Please review the proposal"
-      ]
-    };
   }
 
   async initialize(): Promise<void> {
@@ -89,32 +61,29 @@ class NotificationService {
     this.tapCallbacks.push(callback);
   }
 
-  async sendTestNotification(type: 'call' | 'video' | 'message'): Promise<void> {
-    const messages = this.getRandomMessages();
-    const randomMessage = messages[type][Math.floor(Math.random() * messages[type].length)];
-    
-    const notifications = {
-      call: {
-        title: '📞 Incoming Call',
-        body: randomMessage,
-        icon: '/icons/call.png',
-        data: { type: 'call', userId: 'caller_' + Date.now(), deepLink: '/buzzcall/voice-call/simulation' }
-      },
-      video: {
-        title: '📹 Video Call',
-        body: randomMessage,
-        icon: '/icons/video.png',
-        data: { type: 'video', userId: 'video_' + Date.now(), deepLink: '/buzzcall/video-conference/simulation' }
-      },
-      message: {
-        title: '💬 New Message',
-        body: randomMessage,
-        icon: '/icons/message.png',
-        data: { type: 'message', chatId: 'chat_' + Date.now(), deepLink: '/buzzcall/messages/simulation' }
-      }
+  async sendCustomNotification(type: 'call' | 'video' | 'message', customMessage?: string): Promise<void> {
+    const titles = {
+      call: '📞 Incoming Call',
+      video: '📹 Video Call',
+      message: '💬 New Message'
     };
 
-    const notification = notifications[type];
+    const defaultMessages = {
+      call: 'Someone is calling you',
+      video: 'Video conference invitation',
+      message: 'You have a new message'
+    };
+
+    const notification = {
+      title: titles[type],
+      body: customMessage || defaultMessages[type],
+      icon: `/icons/${type}.png`,
+      data: { 
+        type, 
+        userId: `user_${Date.now()}`, 
+        deepLink: `/buzzcall/${type}/demo` 
+      }
+    };
     
     setTimeout(() => {
       this.notificationCallbacks.forEach(callback => callback(notification));
@@ -138,15 +107,17 @@ class NotificationService {
     }, 1000);
   }
 
+  async sendTestNotification(type: 'call' | 'video' | 'message'): Promise<void> {
+    return this.sendCustomNotification(type);
+  }
+
   // Simulate backend API call
-  async triggerFromBackend(type: string, data: any): Promise<void> {
-    // This would typically make an HTTP request to your backend
-    console.log('Triggering notification from backend:', { type, data });
+  async triggerFromBackend(type: string, customMessage?: string): Promise<void> {
+    console.log('Triggering notification from backend:', { type, customMessage });
     
-    // Simulate backend response
     return new Promise((resolve) => {
       setTimeout(() => {
-        this.sendTestNotification(type as any);
+        this.sendCustomNotification(type as any, customMessage);
         resolve();
       }, 500);
     });

@@ -59,7 +59,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
       case 'video':
         return 'Video Conference';
       case 'message':
-        return 'Priority Message';
+        return 'Message';
       default:
         return 'Notification';
     }
@@ -72,17 +72,76 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
       message: '/buzzcall/messages/simulation'
     };
     
-    // Enhanced deep linking simulation
     const targetUrl = deepLinks[notification.type];
-    toast.success(`🎯 BuzzCall Deep Link: Opening ${getTypeName()}`, {
+    toast.success(`🎯 Deep Link: Opening ${getTypeName()}`, {
       description: `Navigating to ${targetUrl}`,
       action: {
         label: "Open in New Tab",
-        onClick: () => window.open(targetUrl, '_blank')
+        onClick: () => {
+          // Create a simple demo page content
+          const demoContent = `
+            <html>
+              <head>
+                <title>${getTypeName()} - Demo</title>
+                <style>
+                  body { font-family: Arial, sans-serif; padding: 40px; background: #f5f5f5; }
+                  .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+                  .header { text-align: center; margin-bottom: 30px; }
+                  .icon { font-size: 48px; margin-bottom: 20px; }
+                  h1 { color: #333; margin-bottom: 10px; }
+                  p { color: #666; line-height: 1.6; }
+                  .feature-list { background: #f8f9fa; padding: 20px; border-radius: 8px; margin: 20px 0; }
+                  .feature-list h3 { margin-top: 0; color: #333; }
+                  .feature-list li { margin: 8px 0; }
+                </style>
+              </head>
+              <body>
+                <div class="container">
+                  <div class="header">
+                    <div class="icon">${notification.type === 'call' ? '📞' : notification.type === 'video' ? '📹' : '💬'}</div>
+                    <h1>${getTypeName()} Interface</h1>
+                    <p>This is a demo of the ${getTypeName().toLowerCase()} feature</p>
+                  </div>
+                  
+                  <div class="feature-list">
+                    <h3>🚀 Future Enhancements</h3>
+                    <ul>
+                      ${notification.type === 'call' ? `
+                        <li>Real-time voice calling with WebRTC</li>
+                        <li>Call recording and transcription</li>
+                        <li>Multi-party conference calls</li>
+                        <li>Call quality analytics</li>
+                      ` : notification.type === 'video' ? `
+                        <li>HD video conferencing</li>
+                        <li>Screen sharing capabilities</li>
+                        <li>Virtual backgrounds</li>
+                        <li>Recording and playback</li>
+                      ` : `
+                        <li>Rich text messaging</li>
+                        <li>File and media sharing</li>
+                        <li>Message encryption</li>
+                        <li>Group chat functionality</li>
+                      `}
+                    </ul>
+                  </div>
+                  
+                  <p><strong>Note:</strong> This is a demonstration interface. In a production environment, this would be the actual ${getTypeName().toLowerCase()} interface with full functionality.</p>
+                </div>
+              </body>
+            </html>
+          `;
+          
+          const blob = new Blob([demoContent], { type: 'text/html' });
+          const url = URL.createObjectURL(blob);
+          window.open(url, '_blank');
+          
+          // Clean up the blob URL after a short delay
+          setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
       }
     });
     
-    console.log('🔗 Enhanced deep link activated:', {
+    console.log('🔗 Deep link activated:', {
       type: notification.type,
       url: targetUrl,
       timestamp: new Date().toISOString(),
@@ -106,19 +165,19 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
     <Card className={`transition-all duration-200 buzz-card-gradient border-border/50 hover:border-primary/30 ${
       !notification.read ? 'ring-1 ring-primary/20 bg-primary/5' : ''
     }`}>
-      <CardContent className="p-5">
-        <div className="flex items-start justify-between">
-          <div className="flex items-start gap-4 flex-1">
-            <div className="mt-1 p-2 rounded-lg bg-muted/20">
+      <CardContent className="p-4 sm:p-5">
+        <div className="flex items-start justify-between flex-col sm:flex-row gap-4">
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            <div className="mt-1 p-2 rounded-lg bg-muted/20 flex-shrink-0">
               {getIcon()}
             </div>
             
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-2 flex-wrap">
-                <h4 className="font-semibold text-foreground truncate">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                <h4 className="font-semibold text-foreground truncate text-sm sm:text-base">
                   {notification.title}
                 </h4>
-                <Badge className={getTypeColor()}>
+                <Badge className={`${getTypeColor()} text-xs`}>
                   {getTypeName()}
                 </Badge>
                 {!notification.read && (
@@ -133,22 +192,22 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
                 {notification.body}
               </p>
               
-              <div className="flex items-center gap-3 text-xs text-muted-foreground">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
                 <span className="flex items-center gap-1">
                   <Zap className="h-3 w-3" />
                   {notification.timestamp.toLocaleTimeString()}
                 </span>
                 <span>•</span>
-                <span>BuzzCall Engine</span>
+                <span>Enterprise</span>
               </div>
             </div>
           </div>
           
-          <div className="flex gap-2 ml-4 flex-wrap">
+          <div className="flex gap-2 flex-wrap sm:flex-nowrap">
             <Button
               size="sm"
               onClick={handleDeepLink}
-              className="flex items-center gap-2 buzz-accent-gradient hover:opacity-90"
+              className="flex items-center gap-2 buzz-accent-gradient hover:opacity-90 text-xs"
             >
               <ArrowUpRight className="h-3 w-3" />
               Open
@@ -159,7 +218,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
                 size="sm"
                 variant="outline"
                 onClick={() => onMarkAsRead(notification.id)}
-                className="flex items-center gap-2 border-border/50 hover:bg-muted/20"
+                className="flex items-center gap-2 border-border/50 hover:bg-muted/20 text-xs"
               >
                 <Check className="h-3 w-3" />
                 Read
@@ -171,7 +230,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
                 size="sm"
                 variant="outline"
                 onClick={handleDelete}
-                className="flex items-center gap-2 border-destructive/20 hover:bg-destructive/10 text-destructive hover:text-destructive"
+                className="flex items-center gap-2 border-destructive/20 hover:bg-destructive/10 text-destructive hover:text-destructive text-xs"
               >
                 <Trash2 className="h-3 w-3" />
               </Button>
