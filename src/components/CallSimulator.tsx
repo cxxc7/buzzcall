@@ -7,9 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Phone, Video, Send, Server, Zap } from "lucide-react";
 import { toast } from "sonner";
+import NotificationService from '@/services/NotificationService';
 
 export const CallSimulator: React.FC = () => {
-  const [backendUrl, setBackendUrl] = useState('https://api.buzzcall.enterprise');
+  const [backendUrl, setBackendUrl] = useState('https://api.buzzcall.enterprise/v1');
   const [recipientId, setRecipientId] = useState('user_enterprise_001');
   const [notificationType, setNotificationType] = useState('call');
   const [customMessage, setCustomMessage] = useState('');
@@ -43,30 +44,9 @@ export const CallSimulator: React.FC = () => {
       toast.info('Processing through BuzzCall API...');
       await new Promise(resolve => setTimeout(resolve, 1200));
       
-      // Simulate FCM trigger with enterprise payload
-      const options: NotificationOptions = {
-        body: payload.body,
-        icon: `/icons/${notificationType}.png`,
-        badge: '/icons/buzzcall-badge.png',
-        data: payload.data,
-        requireInteraction: notificationType === 'call' || notificationType === 'video',
-      };
-
-      // Add enterprise call actions
-      if (notificationType === 'call' && 'ServiceWorkerRegistration' in window) {
-        (options as any).actions = [
-          { action: 'answer', title: 'Accept Call' },
-          { action: 'decline', title: 'Decline Call' }
-        ];
-      }
-
-      const notification = new Notification(payload.title, options);
-
-      notification.onclick = () => {
-        toast.success(`🎯 BuzzCall Deep Link: ${payload.data.deepLink}`);
-        notification.close();
-      };
-
+      // Use the existing NotificationService instead of creating browser notifications directly
+      await NotificationService.sendTestNotification(notificationType as 'call' | 'video' | 'message');
+      
       toast.success('✅ Enterprise notification delivered successfully!');
       
     } catch (error) {
@@ -96,7 +76,7 @@ export const CallSimulator: React.FC = () => {
               id="backend-url"
               value={backendUrl}
               onChange={(e) => setBackendUrl(e.target.value)}
-              placeholder="https://api.buzzcall.enterprise"
+              placeholder="https://api.buzzcall.enterprise/v1"
               className="bg-muted/20 border-border/50"
             />
           </div>
@@ -168,6 +148,8 @@ export const CallSimulator: React.FC = () => {
             <p><strong className="text-primary">Production Ready:</strong> This simulates enterprise backend FCM integration</p>
             <p><strong className="text-primary">Native Processing:</strong> Java modules handle notifications in killed app state</p>
             <p><strong className="text-primary">Smart Routing:</strong> Deep links navigate to specific app screens automatically</p>
+            <p><strong className="text-primary">API Endpoints:</strong> Use the URLs above for your backend integration</p>
+            <p><strong className="text-primary">WebSocket URL:</strong> wss://ws.buzzcall.enterprise/v1 (for real-time updates)</p>
           </div>
         </div>
       </CardContent>

@@ -99,14 +99,7 @@ class NotificationService {
           requireInteraction: type === 'call' || type === 'video', // Keep call notifications visible
         };
 
-        // Add actions only if supported (this is not standard in all browsers)
-        if (type === 'call' && 'ServiceWorkerRegistration' in window) {
-          (options as any).actions = [
-            { action: 'answer', title: 'Answer' },
-            { action: 'decline', title: 'Decline' }
-          ];
-        }
-
+        // Create notification without actions (they cause errors in regular browser notifications)
         const browserNotification = new Notification(notification.title, options);
 
         browserNotification.onclick = () => {
