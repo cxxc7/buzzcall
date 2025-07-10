@@ -3,7 +3,7 @@ import React from 'react';
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Phone, Video, MessageSquare, Check, ExternalLink, Zap } from "lucide-react";
+import { Phone, Video, MessageSquare, Check, ExternalLink, Zap, Trash2, ArrowUpRight } from "lucide-react";
 import { toast } from "sonner";
 
 interface Notification {
@@ -18,11 +18,13 @@ interface Notification {
 interface NotificationItemProps {
   notification: Notification;
   onMarkAsRead: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 export const NotificationItem: React.FC<NotificationItemProps> = ({ 
   notification, 
-  onMarkAsRead 
+  onMarkAsRead,
+  onDelete
 }) => {
   const getIcon = () => {
     switch (notification.type) {
@@ -70,12 +72,33 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
       message: '/buzzcall/messages/simulation'
     };
     
-    toast.success(`🎯 BuzzCall Navigation: ${deepLinks[notification.type]}`);
-    console.log('🔗 Deep link activated:', deepLinks[notification.type]);
+    // Enhanced deep linking simulation
+    const targetUrl = deepLinks[notification.type];
+    toast.success(`🎯 BuzzCall Deep Link: Opening ${getTypeName()}`, {
+      description: `Navigating to ${targetUrl}`,
+      action: {
+        label: "Open in New Tab",
+        onClick: () => window.open(targetUrl, '_blank')
+      }
+    });
+    
+    console.log('🔗 Enhanced deep link activated:', {
+      type: notification.type,
+      url: targetUrl,
+      timestamp: new Date().toISOString(),
+      notificationId: notification.id
+    });
     
     // Mark as read when interacted with
     if (!notification.read) {
       onMarkAsRead(notification.id);
+    }
+  };
+
+  const handleDelete = () => {
+    if (onDelete) {
+      onDelete(notification.id);
+      toast.success("Notification deleted");
     }
   };
 
@@ -91,7 +114,7 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
             </div>
             
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-2">
+              <div className="flex items-center gap-3 mb-2 flex-wrap">
                 <h4 className="font-semibold text-foreground truncate">
                   {notification.title}
                 </h4>
@@ -121,14 +144,14 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
             </div>
           </div>
           
-          <div className="flex gap-2 ml-4">
+          <div className="flex gap-2 ml-4 flex-wrap">
             <Button
               size="sm"
               onClick={handleDeepLink}
               className="flex items-center gap-2 buzz-accent-gradient hover:opacity-90"
             >
-              <ExternalLink className="h-3 w-3" />
-              Navigate
+              <ArrowUpRight className="h-3 w-3" />
+              Open
             </Button>
             
             {!notification.read && (
@@ -140,6 +163,17 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
               >
                 <Check className="h-3 w-3" />
                 Read
+              </Button>
+            )}
+
+            {onDelete && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleDelete}
+                className="flex items-center gap-2 border-destructive/20 hover:bg-destructive/10 text-destructive hover:text-destructive"
+              >
+                <Trash2 className="h-3 w-3" />
               </Button>
             )}
           </div>

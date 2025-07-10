@@ -1,4 +1,3 @@
-
 // Firebase Cloud Messaging Service for WhatsApp-style notifications
 class NotificationService {
   private static instance: NotificationService;
@@ -11,6 +10,35 @@ class NotificationService {
       NotificationService.instance = new NotificationService();
     }
     return NotificationService.instance;
+  }
+
+  private getRandomMessages() {
+    return {
+      call: [
+        "Incoming call from Alex Johnson",
+        "Sarah wants to talk - urgent", 
+        "Conference call starting now",
+        "Your manager is calling",
+        "Client meeting reminder call"
+      ],
+      video: [
+        "Video meeting with the team",
+        "Sarah wants to video chat",
+        "Join the product demo now",
+        "Weekly standup is starting",
+        "Client presentation ready"
+      ],
+      message: [
+        "Can we reschedule our meeting?",
+        "Great work on the project!",
+        "The files you requested are ready",
+        "Don't forget about tomorrow's deadline",
+        "New task assigned to you",
+        "Meeting moved to 3 PM",
+        "Your report has been approved",
+        "Urgent: Please review the proposal"
+      ]
+    };
   }
 
   async initialize(): Promise<void> {
@@ -62,44 +90,44 @@ class NotificationService {
   }
 
   async sendTestNotification(type: 'call' | 'video' | 'message'): Promise<void> {
+    const messages = this.getRandomMessages();
+    const randomMessage = messages[type][Math.floor(Math.random() * messages[type].length)];
+    
     const notifications = {
       call: {
         title: '📞 Incoming Call',
-        body: 'John Doe is calling you...',
+        body: randomMessage,
         icon: '/icons/call.png',
-        data: { type: 'call', userId: 'john_doe', deepLink: '/call/john_doe' }
+        data: { type: 'call', userId: 'caller_' + Date.now(), deepLink: '/buzzcall/voice-call/simulation' }
       },
       video: {
         title: '📹 Video Call',
-        body: 'Sarah wants to video chat',
+        body: randomMessage,
         icon: '/icons/video.png',
-        data: { type: 'video', userId: 'sarah', deepLink: '/video/sarah' }
+        data: { type: 'video', userId: 'video_' + Date.now(), deepLink: '/buzzcall/video-conference/simulation' }
       },
       message: {
         title: '💬 New Message',
-        body: 'Hey! How are you doing?',
+        body: randomMessage,
         icon: '/icons/message.png',
-        data: { type: 'message', chatId: 'chat_123', deepLink: '/chat/chat_123' }
+        data: { type: 'message', chatId: 'chat_' + Date.now(), deepLink: '/buzzcall/messages/simulation' }
       }
     };
 
     const notification = notifications[type];
     
-    // Simulate receiving notification
     setTimeout(() => {
       this.notificationCallbacks.forEach(callback => callback(notification));
       
-      // Show browser notification if supported
       if ('Notification' in window && Notification.permission === 'granted') {
         const options: NotificationOptions = {
           body: notification.body,
           icon: notification.icon,
           badge: '/icons/badge.png',
           data: notification.data,
-          requireInteraction: type === 'call' || type === 'video', // Keep call notifications visible
+          requireInteraction: type === 'call' || type === 'video',
         };
 
-        // Create notification without actions (they cause errors in regular browser notifications)
         const browserNotification = new Notification(notification.title, options);
 
         browserNotification.onclick = () => {
@@ -107,7 +135,7 @@ class NotificationService {
           browserNotification.close();
         };
       }
-    }, 1000); // Simulate network delay
+    }, 1000);
   }
 
   // Simulate backend API call

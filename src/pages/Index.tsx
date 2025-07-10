@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { toast } from "sonner";
 import NotificationService from '@/services/NotificationService';
@@ -11,6 +12,7 @@ import { NotificationControls } from '@/components/NotificationControls';
 import { LiveNotificationsFeed } from '@/components/LiveNotificationsFeed';
 import { AnalyticsDashboard } from '@/components/AnalyticsDashboard';
 import { TechnicalSpecs } from '@/components/TechnicalSpecs';
+import { WebSocketControl } from '@/components/WebSocketControl';
 
 interface Notification {
   id: string;
@@ -29,18 +31,14 @@ const Index = () => {
   const [isEncryptionReady, setIsEncryptionReady] = useState(false);
 
   useEffect(() => {
-    // Initialize all BuzzCall services
     const initBuzzCall = async () => {
       try {
-        // Initialize core notification service
         await NotificationService.initialize();
         setIsConnected(true);
         
-        // Initialize end-to-end encryption
         await EncryptionService.initialize();
         setIsEncryptionReady(true);
         
-        // Try to initialize WebSocket (non-blocking)
         try {
           await WebSocketService.connect();
           setIsWebSocketConnected(true);
@@ -49,7 +47,6 @@ const Index = () => {
           setIsWebSocketConnected(false);
         }
         
-        // Listen for WebSocket connection changes
         WebSocketService.onConnectionChange((connected) => {
           setIsWebSocketConnected(connected);
           if (connected) {
@@ -57,7 +54,6 @@ const Index = () => {
           }
         });
         
-        // Load stored notifications
         const storedNotifications = NotificationStorageService.getAllNotifications();
         const formattedNotifications = storedNotifications.map(stored => ({
           id: stored.id,
@@ -70,7 +66,6 @@ const Index = () => {
         setNotifications(formattedNotifications);
         setBadgeCount(storedNotifications.filter(n => !n.read).length);
         
-        // Listen for real-time notifications
         NotificationService.onNotificationReceived(async (notification) => {
           const newNotification: Notification = {
             id: Date.now().toString(),
@@ -81,7 +76,6 @@ const Index = () => {
             read: false
           };
           
-          // Store notification with encryption if needed
           await NotificationStorageService.storeNotification({
             title: newNotification.title,
             body: newNotification.body,
@@ -95,7 +89,6 @@ const Index = () => {
           setNotifications(prev => [newNotification, ...prev]);
           setBadgeCount(prev => prev + 1);
           
-          // Send real-time update via WebSocket if connected
           if (WebSocketService.isConnected()) {
             WebSocketService.send({
               type: 'notification_received',
@@ -104,13 +97,11 @@ const Index = () => {
           }
         });
 
-        // Handle smart deep linking
         NotificationService.onNotificationTap((notification) => {
           console.log('🎯 BuzzCall deep link activated:', notification);
           toast.success(`Smart Navigation: ${notification.title}`);
         });
 
-        // Subscribe to WebSocket events
         WebSocketService.subscribe('notification_update', (data) => {
           console.log('📨 Real-time notification update:', data);
           toast.info('Real-time sync active');
@@ -126,7 +117,6 @@ const Index = () => {
 
     initBuzzCall();
 
-    // Cleanup on unmount
     return () => {
       WebSocketService.disconnect();
     };
@@ -139,9 +129,16 @@ const Index = () => {
       )
     );
     setBadgeCount(prev => Math.max(0, prev - 1));
-    
-    // Update storage
     NotificationStorageService.markAsRead(id);
+  };
+
+  const deleteNotification = (id: string) => {
+    setNotifications(prev => prev.filter(notif => notif.id !== id));
+    const notification = notifications.find(n => n.id === id);
+    if (notification && !notification.read) {
+      setBadgeCount(prev => Math.max(0, prev - 1));
+    }
+    // Note: We'd also remove from storage in a real implementation
   };
 
   const clearAllNotifications = () => {
@@ -153,7 +150,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen buzz-gradient">
-      <div className="max-w-6xl mx-auto p-6 space-y-8">
+      <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6 md:space-y-8">
         
         <HeroHeader 
           isConnected={isConnected} 
@@ -168,7 +165,13 @@ const Index = () => {
           isEncryptionReady={isEncryptionReady}
         />
 
-        <CallSimulator />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <CallSimulator />
+          <WebSocketControl 
+            isConnected={isWebSocketConnected}
+            onConnectionChange={setIsWebSocketConnected}
+          />
+        </div>
 
         <NotificationControls 
           hasNotifications={notifications.length > 0} 
@@ -179,9 +182,13 @@ const Index = () => {
           notifications={notifications}
           badgeCount={badgeCount}
           onMarkAsRead={markAsRead}
+          onDeleteNotification={deleteNotification}
+          onClearAll={clearAllNotifications}
         />
 
-        <AnalyticsDashboard />
+        <AnalyticsDashboard 
+          notifications={notifications}
+        />
 
         <TechnicalSpecs 
           isConnected={isConnected}
