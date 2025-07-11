@@ -1,4 +1,3 @@
-
 // Firebase Cloud Messaging Service for WhatsApp-style notifications
 class NotificationService {
   private static instance: NotificationService;
@@ -21,6 +20,8 @@ class NotificationService {
       const permission = await Notification.requestPermission();
       if (permission === 'granted') {
         console.log('Notification permission granted');
+      } else {
+        console.log('Notification permission denied or not granted');
       }
     }
 
@@ -64,7 +65,7 @@ class NotificationService {
   async sendCustomNotification(type: 'call' | 'video' | 'message', customMessage?: string): Promise<void> {
     const titles = {
       call: '📞 Incoming Call',
-      video: '📹 Video Call',
+      video: '📹 Video Conference',
       message: '💬 New Message'
     };
 
@@ -85,26 +86,47 @@ class NotificationService {
       }
     };
     
-    setTimeout(() => {
-      this.notificationCallbacks.forEach(callback => callback(notification));
-      
-      if ('Notification' in window && Notification.permission === 'granted') {
-        const options: NotificationOptions = {
-          body: notification.body,
-          icon: notification.icon,
-          badge: '/icons/badge.png',
-          data: notification.data,
-          requireInteraction: type === 'call' || type === 'video',
-        };
+    // Immediate callback for UI updates
+    this.notificationCallbacks.forEach(callback => callback(notification));
+    
+    // Send browser notification with actual message content
+    if ('Notification' in window && Notification.permission === 'granted') {
+      const options: NotificationOptions = {
+        body: notification.body, // Use the actual message, not a generic one
+        icon: notification.icon,
+        badge: '/icons/badge.png',
+        data: notification.data,
+        requireInteraction: type === 'call' || type === 'video',
+        vibrate: type === 'call' ? [200, 100, 200, 100, 200] : [100, 50, 100],
+        tag: `${type}-${Date.now()}`
+      };
 
+      try {
         const browserNotification = new Notification(notification.title, options);
 
         browserNotification.onclick = () => {
+          console.log('🎯 Notification clicked');
           this.tapCallbacks.forEach(callback => callback(notification));
           browserNotification.close();
+          
+          // Focus window if available
+          if (window) {
+            window.focus();
+          }
         };
+
+        // Auto close non-call notifications after 10 seconds
+        if (type !== 'call') {
+          setTimeout(() => {
+            browserNotification.close();
+          }, 10000);
+        }
+      } catch (error) {
+        console.error('Error creating notification:', error);
       }
-    }, 1000);
+    } else {
+      console.log('Browser notifications not available or permission not granted');
+    }
   }
 
   async sendTestNotification(type: 'call' | 'video' | 'message'): Promise<void> {

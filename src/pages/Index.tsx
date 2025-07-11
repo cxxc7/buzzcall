@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from "sonner";
 import NotificationService from '@/services/NotificationService';
+import MobileNotificationService from '@/services/MobileNotificationService';
 import WebSocketService from '@/services/WebSocketService';
 import EncryptionService from '@/services/EncryptionService';
 import NotificationStorageService from '@/services/NotificationStorageService';
@@ -13,6 +14,9 @@ import { LiveNotificationsFeed } from '@/components/LiveNotificationsFeed';
 import { AnalyticsDashboard } from '@/components/AnalyticsDashboard';
 import { TechnicalSpecs } from '@/components/TechnicalSpecs';
 import { WebSocketControl } from '@/components/WebSocketControl';
+import { MobileOptimizedLayout } from '@/components/MobileOptimizedLayout';
+import { MobileInstructions } from '@/components/MobileInstructions';
+import { UserGuide } from '@/components/UserGuide';
 
 interface Notification {
   id: string;
@@ -29,15 +33,26 @@ const Index = () => {
   const [isConnected, setIsConnected] = useState(false);
   const [isWebSocketConnected, setIsWebSocketConnected] = useState(false);
   const [isEncryptionReady, setIsEncryptionReady] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const initBuzzCall = async () => {
       try {
+        // Check if mobile device
+        const mobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        setIsMobile(mobile);
+
+        // Initialize services
         await NotificationService.initialize();
         setIsConnected(true);
         
         await EncryptionService.initialize();
         setIsEncryptionReady(true);
+        
+        // Initialize mobile notifications if on mobile
+        if (mobile) {
+          await MobileNotificationService.initialize();
+        }
         
         try {
           await WebSocketService.connect();
@@ -75,6 +90,15 @@ const Index = () => {
             timestamp: new Date(),
             read: false
           };
+          
+          // Send mobile notification if on mobile device
+          if (mobile) {
+            await MobileNotificationService.sendMobileNotification(
+              newNotification.title,
+              newNotification.body,
+              newNotification.type
+            );
+          }
           
           await NotificationStorageService.storeNotification({
             title: newNotification.title,
@@ -138,7 +162,6 @@ const Index = () => {
     if (notification && !notification.read) {
       setBadgeCount(prev => Math.max(0, prev - 1));
     }
-    // Note: We'd also remove from storage in a real implementation
   };
 
   const clearAllNotifications = () => {
@@ -148,54 +171,70 @@ const Index = () => {
     toast.success('All notifications cleared');
   };
 
+  const content = (
+    <>
+      <HeroHeader 
+        isConnected={isConnected} 
+        badgeCount={badgeCount}
+        isWebSocketConnected={isWebSocketConnected}
+        isEncryptionReady={isEncryptionReady}
+      />
+      
+      <QuickStats 
+        notificationCount={notifications.length}
+        isWebSocketConnected={isWebSocketConnected}
+        isEncryptionReady={isEncryptionReady}
+      />
+
+      {isMobile && <MobileInstructions />}
+
+      <UserGuide />
+
+      <div className={`grid grid-cols-1 ${isMobile ? 'gap-4' : 'lg:grid-cols-2 gap-6'}`}>
+        <CallSimulator />
+        <WebSocketControl 
+          isConnected={isWebSocketConnected}
+          onConnectionChange={setIsWebSocketConnected}
+        />
+      </div>
+
+      <NotificationControls 
+        hasNotifications={notifications.length > 0} 
+        onClearAll={clearAllNotifications} 
+      />
+
+      <LiveNotificationsFeed 
+        notifications={notifications}
+        badgeCount={badgeCount}
+        onMarkAsRead={markAsRead}
+        onDeleteNotification={deleteNotification}
+        onClearAll={clearAllNotifications}
+      />
+
+      <AnalyticsDashboard 
+        notifications={notifications}
+      />
+
+      <TechnicalSpecs 
+        isConnected={isConnected}
+        isWebSocketConnected={isWebSocketConnected}
+        isEncryptionReady={isEncryptionReady}
+      />
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <MobileOptimizedLayout isWebSocketConnected={isWebSocketConnected}>
+        {content}
+      </MobileOptimizedLayout>
+    );
+  }
+
   return (
     <div className="min-h-screen buzz-gradient">
       <div className="max-w-6xl mx-auto p-4 md:p-6 space-y-6 md:space-y-8">
-        
-        <HeroHeader 
-          isConnected={isConnected} 
-          badgeCount={badgeCount}
-          isWebSocketConnected={isWebSocketConnected}
-          isEncryptionReady={isEncryptionReady}
-        />
-        
-        <QuickStats 
-          notificationCount={notifications.length}
-          isWebSocketConnected={isWebSocketConnected}
-          isEncryptionReady={isEncryptionReady}
-        />
-
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <CallSimulator />
-          <WebSocketControl 
-            isConnected={isWebSocketConnected}
-            onConnectionChange={setIsWebSocketConnected}
-          />
-        </div>
-
-        <NotificationControls 
-          hasNotifications={notifications.length > 0} 
-          onClearAll={clearAllNotifications} 
-        />
-
-        <LiveNotificationsFeed 
-          notifications={notifications}
-          badgeCount={badgeCount}
-          onMarkAsRead={markAsRead}
-          onDeleteNotification={deleteNotification}
-          onClearAll={clearAllNotifications}
-        />
-
-        <AnalyticsDashboard 
-          notifications={notifications}
-        />
-
-        <TechnicalSpecs 
-          isConnected={isConnected}
-          isWebSocketConnected={isWebSocketConnected}
-          isEncryptionReady={isEncryptionReady}
-        />
-
+        {content}
       </div>
     </div>
   );
