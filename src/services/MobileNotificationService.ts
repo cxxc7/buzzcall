@@ -87,7 +87,7 @@ class MobileNotificationService {
         message: '💬'
       };
 
-      const notificationOptions: NotificationOptions = {
+      const notificationOptions: NotificationOptions & { vibrate?: number[] } = {
         body,
         icon: '/icons/notification.png',
         badge: '/icons/badge.png',

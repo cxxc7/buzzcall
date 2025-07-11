@@ -1,3 +1,4 @@
+
 // Firebase Cloud Messaging Service for WhatsApp-style notifications
 class NotificationService {
   private static instance: NotificationService;
@@ -91,8 +92,8 @@ class NotificationService {
     
     // Send browser notification with actual message content
     if ('Notification' in window && Notification.permission === 'granted') {
-      const options: NotificationOptions = {
-        body: notification.body, // Use the actual message, not a generic one
+      const options: NotificationOptions & { vibrate?: number[] } = {
+        body: notification.body,
         icon: notification.icon,
         badge: '/icons/badge.png',
         data: notification.data,
